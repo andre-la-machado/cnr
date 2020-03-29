@@ -4,7 +4,7 @@ Repository containing all the files genetared during participation on the Wind P
 
 ## Challenge Goals:
 
-As desribed by the challenge itself:
+As described by the challenge itself:
 
 "The goal of this challenge is to predict the energy production of six WF owned by CNR. Each WF production will be individually predicted, using meteorological forecasts as input. Predictions will focus on the day-ahead energy production (hourly production forecasts from day D+1 00h to day D+2 00h)."
 
