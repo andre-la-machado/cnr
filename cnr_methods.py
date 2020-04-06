@@ -61,4 +61,27 @@ def get_preprocessed_data():
 def get_simplified_data():
     simple_data = get_preprocessed_data()
     simple_data = simple_data[['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']]
+    simple_data['Wind Speed 100m'] = np.sqrt(simple_data['U_100m']**2 + simple_data['V_100m']**2)
+    simple_data['Wind Direction 100m'] = np.arctan(simple_data['V_100m']/simple_data['U_100m'])
+    simple_data['Wind Speed 10m'] = np.sqrt(simple_data['U_10m']**2 + simple_data['V_10m']**2)
+    simple_data['Wind Direction 10m'] = np.arctan(simple_data['V_10m']/simple_data['U_10m'])
+    simple_data = simple_data.drop(['U_100m','V_100m','U_10m','V_10m'],axis=1)
+
+    #Changing the Direction Reference for Negative Angles
+    simple_data[simple_data['Wind Direction 100m'] < 0]['Wind Direction 100m'] = 360 - simple_data[simple_data['Wind Direction 100m'] < 0]['Wind Direction 100m']
+    simple_data[simple_data['Wind Direction 10m'] < 0]['Wind Direction 10m'] = 360 - simple_data[simple_data['Wind Direction 10m'] < 0]['Wind Direction 10m']
+
     return simple_data
+
+def transform_data(df,shift_n):
+    for column in df.columns:
+        df = np.log(df[column]) - np.log(df[column].shift(1)) #Stabilize the Mean and Variance
+    return df
+
+def revert_data(y_train,y_test):
+    reverted_data = y_train[-1] * np.exp(y_test.cumsum())
+    return reverted_data
+
+def metric_cnr(dataframe_y_pred,dataframe_y_true):
+     cape_cnr = 100*np.sum(np.abs(dataframe_y_pred-dataframe_y_true))/np.sum(dataframe_y_true)
+     return cape_cnr
