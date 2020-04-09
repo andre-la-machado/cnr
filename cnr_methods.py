@@ -21,9 +21,6 @@ def get_preprocessed_data():
        'NWP3_06h_D_V', 'NWP3_06h_D_T', 'NWP3_12h_D_U', 'NWP3_12h_D_V',
        'NWP3_12h_D_T', 'NWP3_18h_D_U', 'NWP3_18h_D_V', 'NWP3_18h_D_T']
 
-    x_train[nwps23] = x_train[nwps23].interpolate(method = 'spline',order=3)
-    x_test[nwps23] = x_train[nwps23].interpolate(method = 'spline',order=3)
-
     x_train['Set'] = 'Train'
     x_test['Set'] = 'Test'
     full_data = pd.concat([x_train,x_test])
