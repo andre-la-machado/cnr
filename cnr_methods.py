@@ -5,22 +5,6 @@ def get_preprocessed_data():
     x_train = pd.read_csv('X_train.csv')
     x_test = pd.read_csv('X_test.csv')
 
-    nwps23 = ['NWP2_00h_D-2_U', 'NWP2_00h_D-2_V',
-       'NWP2_12h_D-2_U', 'NWP2_12h_D-2_V', 'NWP2_00h_D-1_U',
-       'NWP2_00h_D-1_V', 'NWP2_12h_D-1_U', 'NWP2_12h_D-1_V',
-       'NWP2_00h_D_U', 'NWP2_00h_D_V', 'NWP2_12h_D_U', 'NWP2_12h_D_V',
-       'NWP3_00h_D-2_U', 'NWP3_00h_D-2_V', 'NWP3_00h_D-2_T',
-       'NWP3_06h_D-2_U', 'NWP3_06h_D-2_V', 'NWP3_06h_D-2_T',
-       'NWP3_12h_D-2_U', 'NWP3_12h_D-2_V', 'NWP3_12h_D-2_T',
-       'NWP3_18h_D-2_U', 'NWP3_18h_D-2_V', 'NWP3_18h_D-2_T',
-       'NWP3_00h_D-1_U', 'NWP3_00h_D-1_V', 'NWP3_00h_D-1_T',
-       'NWP3_06h_D-1_U', 'NWP3_06h_D-1_V', 'NWP3_06h_D-1_T',
-       'NWP3_12h_D-1_U', 'NWP3_12h_D-1_V', 'NWP3_12h_D-1_T',
-       'NWP3_18h_D-1_U', 'NWP3_18h_D-1_V', 'NWP3_18h_D-1_T',
-       'NWP3_00h_D_U', 'NWP3_00h_D_V', 'NWP3_00h_D_T', 'NWP3_06h_D_U',
-       'NWP3_06h_D_V', 'NWP3_06h_D_T', 'NWP3_12h_D_U', 'NWP3_12h_D_V',
-       'NWP3_12h_D_T', 'NWP3_18h_D_U', 'NWP3_18h_D_V', 'NWP3_18h_D_T']
-
     x_train['Set'] = 'Train'
     x_test['Set'] = 'Test'
     full_data = pd.concat([x_train,x_test])
@@ -53,6 +37,8 @@ def get_preprocessed_data():
     full_data['T'] = full_data[T].mean(axis=1)
     full_data['CLCT'] = full_data[CLCT].mean(axis=1)
 
+    full_data['CLCT'] = full_data['CLCT'].apply(lambda x: 0 if x < 0 else x)
+
     return full_data
 
 def get_simplified_data():
@@ -62,7 +48,7 @@ def get_simplified_data():
 
 def transform_data(df,shift_n):
     for column in df.columns:
-        df = np.log(df[column]) - np.log(df[column].shift(1)) #Stabilize the Mean and Variance
+        df[column] = np.log(df[column]) - np.log(df[column].shift(shift_n)) #Stabilize the Mean and Variance
     return df
 
 def revert_data(y_train,y_test):
