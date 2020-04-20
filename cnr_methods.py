@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd 
 
 def get_preprocessed_data():
-    x_train = pd.read_csv('X_train.csv')
-    x_test = pd.read_csv('X_test.csv')
+    x_train = pd.read_csv('Data/X_train.csv')
+    x_test = pd.read_csv('Data/X_test.csv')
 
     x_train['Set'] = 'Train'
     x_test['Set'] = 'Test'
