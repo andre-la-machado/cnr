@@ -1,6 +1,7 @@
 import numpy as np 
 import pandas as pd 
 
+# Função de Processamento dos Dados
 def get_preprocessed_data():
     x_train = pd.read_csv('Data/X_train.csv')
     x_test = pd.read_csv('Data/X_test.csv')
@@ -41,20 +42,25 @@ def get_preprocessed_data():
 
     return full_data
 
+# Função de Geração dos Dados Simplificados
 def get_simplified_data():
     simple_data = get_preprocessed_data()
     simple_data = simple_data[['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']]
     return simple_data
 
+# Função de Transformação dos Dados (Estabilização de Variância)
 def transform_data(df,shift_n):
     for column in df.columns:
-        df[column] = np.log(df[column]) - np.log(df[column].shift(shift_n)) #Stabilize the Mean and Variance
+        df[column] = np.diff(df[column],prepend=df[column].iloc[0])
     return df
 
-def revert_data(y_train,y_test):
-    reverted_data = y_train[-1] * np.exp(y_test.cumsum())
-    return reverted_data
+# Função de Transformação Reversa dos Dados 
+def revert_data(df):
+    for column in df.columns:
+        df[column] = np.cumsum(df[column])
+    return df
 
+# Função de Cálculo da Métrica da Competição
 def metric_cnr(dataframe_y_pred,dataframe_y_true):
      cape_cnr = 100*np.sum(np.abs(dataframe_y_pred-dataframe_y_true))/np.sum(dataframe_y_true)
      return cape_cnr
