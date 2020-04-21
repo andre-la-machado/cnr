@@ -1,5 +1,8 @@
-import numpy as np 
+import numpy as np
+import cupy as cp
 import pandas as pd 
+import datetime
+import xgboost as xgb
 
 # Função de Processamento dos Dados
 def get_preprocessed_data():
@@ -49,7 +52,7 @@ def get_simplified_data():
     return simple_data
 
 # Função de Transformação dos Dados (Estabilização de Variância)
-def transform_data(df,shift_n):
+def transform_data(df):
     for column in df.columns:
         df[column] = np.diff(df[column],prepend=df[column].iloc[0])
     return df
@@ -64,3 +67,35 @@ def revert_data(df):
 def metric_cnr(dataframe_y_pred,dataframe_y_true):
      cape_cnr = 100*np.sum(np.abs(dataframe_y_pred-dataframe_y_true))/np.sum(dataframe_y_true)
      return cape_cnr
+
+# Funções para Implementação do LOFO em GPU
+
+def lofo_df(df,y,features,feature_out):
+    if feature_out is not None:
+        df = df.drop(feature_out,axis=1)
+    gpu_matrix = cp.asarray(df[[feature for feature in features if feature != feature_out]])
+    gpu_matrix = xgb.DMatrix(gpu_matrix,label=y)
+    return gpu_matrix
+
+def lofo_score(X,y,features,feature_out,model):
+    feature_df = lofo_df(X,y,features,feature_out=feature_out)
+    model_params = model.get_xgb_params()
+    lofo_score = xgb.cv(params=model_params,dtrain=feature_df)
+    return lofo_score.iloc[:, [2]].mean()
+
+def LOFO_GPU_Importance(X,y,features,model):
+    base_score = lofo_score(X,y,features,None,model)
+    scores = np.empty(0)
+    i = 0
+    for feature_out in features:
+        i = i + 1
+        start_time = datetime.datetime.now()
+        feature_score = lofo_score(X,y,features,feature_out,model)
+        scores = np.append(scores,base_score-feature_score)
+        end_time = datetime.datetime.now()
+        delta = end_time - start_time
+        print('{}/{} {}.{} s/it'.format(i,len(features),delta.seconds,delta.microseconds))
+    importance_df = pd.DataFrame()
+    importance_df["feature"] = features
+    importance_df["score"] = scores
+    return importance_df.sort_values(by='score',ascending=True)
