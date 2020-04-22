@@ -34,12 +34,12 @@ def get_preprocessed_data():
         elif (column.__contains__('CLCT')):
             CLCT.append(column)
 
-    full_data['U_100m'] = full_data[U_100m].mean(axis=1)
-    full_data['V_100m'] = full_data[V_100m].mean(axis=1)
-    full_data['U_10m'] = full_data[U_10m].mean(axis=1)
-    full_data['V_10m'] = full_data[V_10m].mean(axis=1)
-    full_data['T'] = full_data[T].mean(axis=1)
-    full_data['CLCT'] = full_data[CLCT].mean(axis=1)
+    full_data['U_100m'] = full_data[U_100m].median(axis=1)
+    full_data['V_100m'] = full_data[V_100m].median(axis=1)
+    full_data['U_10m'] = full_data[U_10m].median(axis=1)
+    full_data['V_10m'] = full_data[V_10m].median(axis=1)
+    full_data['T'] = full_data[T].median(axis=1)
+    full_data['CLCT'] = full_data[CLCT].median(axis=1)
 
     full_data['CLCT'] = full_data['CLCT'].apply(lambda x: 0 if x < 0 else x)
 
