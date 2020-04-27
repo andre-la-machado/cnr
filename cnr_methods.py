@@ -64,9 +64,10 @@ def revert_data(df):
     return df
 
 # Função de Cálculo da Métrica da Competição
-def metric_cnr(dataframe_y_pred,dataframe_y_true):
-     cape_cnr = 100*np.sum(np.abs(dataframe_y_pred-dataframe_y_true))/np.sum(dataframe_y_true)
-     return cape_cnr
+def metric_cnr(preds,dtrain):
+    labels = dtrain.get_label()
+    cape_cnr = 100*np.sum(np.abs(preds-labels))/np.sum(labels)
+    return 'CAPE', cape_cnr
 
 # Funções para Implementação do LOFO em GPU
 
