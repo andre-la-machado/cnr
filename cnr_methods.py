@@ -3,6 +3,8 @@ import cupy as cp
 import pandas as pd 
 import datetime
 import xgboost as xgb
+from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
+from sklearn.model_selection import TimeSeriesSplit
 
 # Função de Processamento dos Dados
 def get_preprocessed_data():
@@ -78,20 +80,50 @@ def lofo_df(df,y,features,feature_out):
     gpu_matrix = xgb.DMatrix(gpu_matrix,label=y)
     return gpu_matrix
 
-def lofo_score(X,y,features,feature_out,model):
-    feature_df = lofo_df(X,y,features,feature_out=feature_out)
-    model_params = model.get_xgb_params()
-    lofo_score = xgb.cv(params=model_params,dtrain=feature_df)
-    return lofo_score.iloc[:, [2]].mean()
+def lofo_objective(X,y,features,feature_out,param):
+    #Internal Parameters
+    k_fold_splits = 5
+    num_boost_round = 40
+    early_stopping_rounds = 5
 
-def LOFO_GPU_Importance(X,y,features,model):
-    base_score = lofo_score(X,y,features,None,model)
+    # Define Time Split Cross Validation
+    tscv = TimeSeriesSplit(n_splits=k_fold_splits)
+    
+    # Separating a Holdout Set
+    X_holdout = X[-round(len(X)/8):]
+    y_holdout = y[-round(len(X)/8):]
+    dhold = lofo_df(X_holdout,y_holdout,features,feature_out)
+    X = X[:-round(len(X)/8)]
+    y = y[:-round(len(X)/8)]
+
+    first_time = True
+    for train_index, val_index in tscv.split(X):
+        # Get the Data of the Split
+        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
+        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
+        dtrain = lofo_df(X_train,y_train['Production'],features,feature_out)
+        dval = lofo_df(X_val,y_val['Production'],features,feature_out)
+
+        # Train the Model
+        watchlist = [(dtrain,'train'),(dval,'eval')]
+        if first_time == True:
+            bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
+            first_time = False
+        else:
+            bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False,xgb_model=bst)
+
+    preds = bst.predict(dhold,ntree_limit=bst.best_ntree_limit)
+    score = metric_cnr(preds,dhold)
+    return score[1]
+
+def LOFO_GPU_Importance(X,y,features,param):
+    base_score = lofo_objective(X,y,features,None,param)
     scores = np.empty(0)
     i = 0
     for feature_out in features:
         i = i + 1
         start_time = datetime.datetime.now()
-        feature_score = lofo_score(X,y,features,feature_out,model)
+        feature_score = lofo_objective(X,y,features,feature_out,param)
         scores = np.append(scores,base_score-feature_score)
         end_time = datetime.datetime.now()
         delta = end_time - start_time
