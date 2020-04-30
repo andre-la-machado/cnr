@@ -83,8 +83,8 @@ def lofo_df(df,y,features,feature_out):
 def lofo_objective(X,y,features,feature_out,param):
     #Internal Parameters
     k_fold_splits = 5
-    num_boost_round = 500
-    early_stopping_rounds = 50
+    num_boost_round = 100
+    early_stopping_rounds = 10
 
     # Define Time Split Cross Validation
     tscv = TimeSeriesSplit(n_splits=k_fold_splits)
@@ -93,10 +93,10 @@ def lofo_objective(X,y,features,feature_out,param):
     X_holdout = X[-round(len(X)/8):]
     y_holdout = y[-round(len(X)/8):]
     dhold = lofo_df(X_holdout,y_holdout,features,feature_out)
+
     X = X[:-round(len(X)/8)]
     y = y[:-round(len(X)/8)]
-
-    first_time = True
+    hold_scores = np.empty(0)
     for train_index, val_index in tscv.split(X):
         # Get the Data of the Split
         X_train, X_val = X.iloc[train_index], X.iloc[val_index]
@@ -106,15 +106,12 @@ def lofo_objective(X,y,features,feature_out,param):
 
         # Train the Model
         watchlist = [(dtrain,'train'),(dval,'eval')]
-        if first_time == True:
-            bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
-            first_time = False
-        else:
-            bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False,xgb_model=bst)
+        bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
+        preds = bst.predict(dhold,ntree_limit=bst.best_ntree_limit)
+        score = metric_cnr(preds,dhold)
+        hold_scores = np.append(hold_scores,score[1])
 
-    preds = bst.predict(dhold,ntree_limit=bst.best_ntree_limit)
-    score = metric_cnr(preds,dhold)
-    return score[1]
+    return hold_scores.mean()
 
 def LOFO_GPU_Importance(X,y,features,param):
     base_score = lofo_objective(X,y,features,None,param)
