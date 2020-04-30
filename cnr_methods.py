@@ -83,8 +83,8 @@ def lofo_df(df,y,features,feature_out):
 def lofo_objective(X,y,features,feature_out,param):
     #Internal Parameters
     k_fold_splits = 5
-    num_boost_round = 60
-    early_stopping_rounds = 5
+    num_boost_round = 500
+    early_stopping_rounds = 50
 
     # Define Time Split Cross Validation
     tscv = TimeSeriesSplit(n_splits=k_fold_splits)
