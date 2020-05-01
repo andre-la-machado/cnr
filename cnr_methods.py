@@ -49,9 +49,14 @@ def get_preprocessed_data():
 
 # Função de Geração dos Dados Simplificados
 def get_simplified_data():
-    simple_data = get_preprocessed_data()
-    simple_data = simple_data[['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']]
-    return simple_data
+    X = get_preprocessed_data()
+    X = X[['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']]
+    X['Time'] = pd.to_datetime(X['Time'],dayfirst=True)
+    X = X.set_index('Time')
+
+    y = pd.read_csv('Data/Y_train.csv')
+    y = y.set_index('ID')
+    return X,y
 
 # Função de Transformação dos Dados (Estabilização de Variância)
 def transform_data(df):
