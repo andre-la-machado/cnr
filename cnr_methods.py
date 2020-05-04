@@ -65,10 +65,9 @@ def transform_data(df):
     return df
 
 # Função de Transformação Reversa dos Dados 
-def revert_data(df):
-    for column in df.columns:
-        df[column] = np.cumsum(df[column])
-    return df
+def revert_data(preds):
+    reverted_data = np.cumsum(preds)
+    return reverted_data
 
 # Função de Cálculo da Métrica da Competição
 def metric_cnr(preds,dtrain):
@@ -137,7 +136,11 @@ def LOFO_GPU_Importance(X,y,features,param):
 
     # Funções para Filtragem de Variáveis
 
-    def get_selected_features(n_features):
-    selected_features = pd.read_csv(r'Feature Selection\Importance_WF1.csv')
-    selected_features = selected_features[:n_features]['feature']
-    return selected_features
+def get_selected_features(n_features):
+    selected_features = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Importance_WF1.csv')
+    selected_features = list(selected_features[:n_features]['feature'].values)
+
+    selected_features = ['ID','Unnamed: 0','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set'] + selected_features
+    feature_data = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Selected_Features_Data.csv')
+    feature_data = feature_data[selected_features]
+    return feature_data
