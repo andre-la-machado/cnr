@@ -134,3 +134,10 @@ def LOFO_GPU_Importance(X,y,features,param):
     importance_df["feature"] = features
     importance_df["score"] = scores
     return importance_df.sort_values(by='score',ascending=True)
+
+    # Funções para Filtragem de Variáveis
+
+    def get_selected_features(n_features):
+    selected_features = pd.read_csv(r'Feature Selection\Importance_WF1.csv')
+    selected_features = selected_features[:n_features]['feature']
+    return selected_features
