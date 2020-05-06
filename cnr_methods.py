@@ -61,7 +61,9 @@ def get_simplified_data():
 # Função de Transformação dos Dados (Estabilização de Variância)
 def transform_data(df):
     for column in df.columns:
+        first_row = df[column].iloc[0]
         df[column] = np.diff(df[column],prepend=df[column].iloc[0])
+        df[column].iloc[0] = first_row
     return df
 
 # Função de Transformação Reversa dos Dados 
@@ -72,12 +74,13 @@ def revert_data(preds):
 # Função de Cálculo da Métrica da Competição
 def metric_cnr(preds,dtrain):
     labels = dtrain.get_label()
-
-    labels = revert_data(labels)
-    preds = revert_data(preds)
-    
     cape_cnr = 100*np.sum(np.abs(preds-labels))/np.sum(labels)
     return 'CAPE', cape_cnr
+
+
+
+
+
 
 # Funções para Implementação do LOFO em GPU
 
