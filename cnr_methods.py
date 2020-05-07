@@ -61,9 +61,7 @@ def get_simplified_data():
 # Função de Transformação dos Dados (Estabilização de Variância)
 def transform_data(df):
     for column in df.columns:
-        first_row = df[column].iloc[0]
         df[column] = np.diff(df[column],prepend=df[column].iloc[0])
-        df[column].iloc[0] = first_row
     return df
 
 # Função de Transformação Reversa dos Dados 
@@ -87,7 +85,13 @@ def metric_cnr(preds,dtrain):
 def lofo_df(df,y,features,feature_out):
     if feature_out is not None:
         df = df.drop(feature_out,axis=1)
+
     gpu_matrix = cp.asarray(df[[feature for feature in features if feature != feature_out]])
+    '''
+    for i in range(len(gpu_matrix[0])):
+        gpu_matrix[:,i] = cp.diff(gpu_matrix[:,i],prepend=gpu_matrix[:,i][0].item())
+    '''
+
     gpu_matrix = xgb.DMatrix(gpu_matrix,label=y)
     return gpu_matrix
 
@@ -109,11 +113,6 @@ def lofo_objective(X,y,features,feature_out,param):
         # Separating Training Set of Split on Train and Validation Subsets
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.143, shuffle=False)
 
-        # Transform the Subsets (Diff)
-        X_train = transform_data(X_train[features])
-        X_val = transform_data(X_val[features])
-        X_test = transform_data(X_test[features])
-
         dtrain = lofo_df(X_train,y_train['Production'],features,feature_out)
         dval = lofo_df(X_val,y_val['Production'],features,feature_out)
         dtest = lofo_df(X_test,y_test['Production'],features,feature_out)
@@ -128,6 +127,7 @@ def lofo_objective(X,y,features,feature_out,param):
     return test_scores.mean()
 
 def LOFO_GPU_Importance(X,y,features,param):
+    X = transform_data(X[features])
     base_score = lofo_objective(X,y,features,None,param)
     scores = np.empty(0)
     i = 0
