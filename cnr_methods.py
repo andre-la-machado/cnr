@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 import xgboost as xgb
 from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, train_test_split
 
 # Função de Processamento dos Dados
 def get_preprocessed_data():
@@ -99,30 +99,33 @@ def lofo_objective(X,y,features,feature_out,param):
 
     # Define Time Split Cross Validation
     tscv = TimeSeriesSplit(n_splits=k_fold_splits)
-    
-    # Separating a Holdout Set
-    X_holdout = X[-round(len(X)/8):]
-    y_holdout = y[-round(len(X)/8):]
-    dhold = lofo_df(X_holdout,y_holdout,features,feature_out)
 
-    X = X[:-round(len(X)/8)]
-    y = y[:-round(len(X)/8)]
-    hold_scores = np.empty(0)
-    for train_index, val_index in tscv.split(X):
+    test_scores = np.empty(0)
+    for train_index, test_index in tscv.split(X):
         # Get the Data of the Split
-        X_train, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_train, y_val = y.iloc[train_index], y.iloc[val_index]
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        # Separating Training Set of Split on Train and Validation Subsets
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.143, shuffle=False)
+
+        # Transform the Subsets (Diff)
+        X_train = transform_data(X_train[features])
+        X_val = transform_data(X_val[features])
+        X_test = transform_data(X_test[features])
+
         dtrain = lofo_df(X_train,y_train['Production'],features,feature_out)
         dval = lofo_df(X_val,y_val['Production'],features,feature_out)
+        dtest = lofo_df(X_test,y_test['Production'],features,feature_out)
 
         # Train the Model
         watchlist = [(dtrain,'train'),(dval,'eval')]
         bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
-        preds = bst.predict(dhold,ntree_limit=bst.best_ntree_limit)
-        score = metric_cnr(preds,dhold)
-        hold_scores = np.append(hold_scores,score[1])
+        preds = bst.predict(dtest,ntree_limit=bst.best_ntree_limit)
+        score = metric_cnr(preds,dtest)
+        test_scores = np.append(test_scores,score[1])
 
-    return hold_scores.mean()
+    return test_scores.mean()
 
 def LOFO_GPU_Importance(X,y,features,param):
     base_score = lofo_objective(X,y,features,None,param)
