@@ -179,7 +179,7 @@ def get_selected_features(n_features):
        'U_10m_Distance_Min', 'V_10m_Distance_Max', 'V_10m_Distance_Min']
 
 
-    selected_features = base_features + manual_features + selected_features
+    selected_features = base_features + manual_features +selected_features
     # Dropping Duplicates
     features = [] 
     [features.append(x) for x in selected_features if x not in features] 
