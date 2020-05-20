@@ -156,32 +156,6 @@ def get_selected_features(n_features):
     base_features = ['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']
 
     manual_features = ['Wind Speed 100m', 'Wind Direction 100m',
-       'Wind Speed 10m', 'Wind Direction 10m', 'T_last_week', 'T_last_month',
-       'CLCT_last_week', 'CLCT_last_month', 'U_100m_last_week',
-       'U_100m_last_month', 'V_100m_last_week', 'V_100m_last_month',
-       'U_10m_last_week', 'U_10m_last_month', 'V_10m_last_week',
-       'V_10m_last_month', 'Month_Number', 'Quarter_Number', 'T_Month_Mean',
-       'CLCT_Month_Mean', 'U_100m_Month_Mean', 'V_100m_Month_Mean',
-       'U_10m_Month_Mean', 'V_10m_Month_Mean', 'T_Month_Median',
-       'CLCT_Month_Median', 'U_100m_Month_Median', 'V_100m_Month_Median',
-       'U_10m_Month_Median', 'V_10m_Month_Median', 'T_Month_Variance',
-       'CLCT_Month_Variance', 'U_100m_Month_Variance', 'V_100m_Month_Variance',
-       'U_10m_Month_Variance', 'V_10m_Month_Variance', 'T_Quarter_Mean',
-       'CLCT_Quarter_Mean', 'U_100m_Quarter_Mean', 'V_100m_Quarter_Mean',
-       'U_10m_Quarter_Mean', 'V_10m_Quarter_Mean', 'T_Quarterh_Median',
-       'CLCT_Quarterh_Median', 'U_100m_Quarterh_Median',
-       'V_100m_Quarterh_Median', 'U_10m_Quarterh_Median',
-       'V_10m_Quarterh_Median', 'T_Quarter_Variance', 'CLCT_Quarter_Variance',
-       'U_100m_Quarter_Variance', 'V_100m_Quarter_Variance',
-       'U_10m_Quarter_Variance', 'V_10m_Quarter_Variance', 'cos_day',
-       'sin_day', 'cos_hour', 'sin_hour', 'cos_minute', 'sin_minute',
-       'cos_dayofyear', 'sin_dayofyear', 'cos_dayofweek', 'sin_dayofweek',
-       'T_Distance_Max', 'T_Distance_Min', 'CLCT_Distance_Max',
-       'CLCT_Distance_Min', 'U_100m_Distance_Max', 'U_100m_Distance_Min',
-       'V_100m_Distance_Max', 'V_100m_Distance_Min', 'U_10m_Distance_Max',
-       'U_10m_Distance_Min', 'V_10m_Distance_Max', 'V_10m_Distance_Min']
-
-    manual_features = ['Wind Speed 100m', 'Wind Direction 100m',
     'Wind Speed 10m', 'Wind Direction 10m', 'T_last_week',
     'T_last_month', 'CLCT_last_week', 'CLCT_last_month',
     'U_100m_last_week', 'U_100m_last_month', 'V_100m_last_week',
@@ -228,10 +202,11 @@ def get_selected_features(n_features):
     'V_10m_Expanded_Window_Min']
 
 
-    selected_features = base_features + manual_features
+    selected_features = base_features + manual_features + selected_features
     # Dropping Duplicates
     features = [] 
     [features.append(x) for x in selected_features if x not in features]
     feature_data = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Selected_Features_Data.csv')
     feature_data = feature_data[features]
     return feature_data
+
