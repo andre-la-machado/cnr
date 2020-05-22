@@ -87,10 +87,6 @@ def lofo_df(df,y,features,feature_out):
         df = df.drop(feature_out,axis=1)
 
     gpu_matrix = cp.asarray(df[[feature for feature in features if feature != feature_out]])
-    '''
-    for i in range(len(gpu_matrix[0])):
-        gpu_matrix[:,i] = cp.diff(gpu_matrix[:,i],prepend=gpu_matrix[:,i][0].item())
-    '''
 
     gpu_matrix = xgb.DMatrix(gpu_matrix,label=y)
     return gpu_matrix
@@ -151,9 +147,7 @@ def get_selected_features(n_features):
     #selected_features = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Importance_WF1.csv')
     selected_features = list(selected_features[:n_features]['feature'].values)
 
-    #base_features = ['ID','Unnamed: 0','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set'] Original One
-
-    base_features = ['ID','Time','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']
+    base_features = ['ID','Unnamed: 0','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']
 
     manual_features = ['Wind Speed 100m', 'Wind Direction 100m',
     'Wind Speed 10m', 'Wind Direction 10m', 'T_last_week',
