@@ -143,8 +143,9 @@ def LOFO_GPU_Importance(X,y,features,param):
     # Funções para Filtragem de Variáveis
 
 def get_selected_features(n_features):
-    selected_features = pd.read_csv(r'C:\Users\andre_\Desktop\Importance_WF1.csv')
+    #selected_features = pd.read_csv(r'C:\Users\andre_\Desktop\Importance_WF1.csv')
     #selected_features = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Importance_WF1.csv')
+    selected_features = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Importance_Manual_Features.csv') #Only Manual Features
     selected_features = list(selected_features[:n_features]['feature'].values)
 
     base_features = ['ID','Unnamed: 0','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']
@@ -196,7 +197,10 @@ def get_selected_features(n_features):
     'V_10m_Expanded_Window_Min']
 
 
-    selected_features = base_features + manual_features + selected_features
+    #selected_features = base_features + manual_features + selected_features
+    selected_features = base_features + selected_features
+
+
     # Dropping Duplicates
     features = [] 
     [features.append(x) for x in selected_features if x not in features]
