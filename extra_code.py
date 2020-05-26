@@ -1,5 +1,23 @@
 # This File contains some functions created to make a more deeper filtering on Tsfresh on the Feature Engineering Notebook. Maybe they will be used again in the future.
 
+# Tsfresh Feature Creation
+
+data = data[['ID','WF','U_100m','V_100m','U_10m','V_10m','T','CLCT','Set']]
+
+tsfresh_data = pd.DataFrame()
+for variable in ['U_100m','V_100m','U_10m','V_10m','T','CLCT']: 
+    df_shift, y = make_forecasting_frame(data[variable],kind=variable,max_timeshift=20,rolling_direction=1)
+    X = extract_features(df_shift, column_id="id", column_sort="time", column_value="value", impute_function=impute,show_warnings=False,n_jobs=3)
+    X['Feature'] = variable
+    tsfresh_data = tsfresh_data.append(X)
+
+tsfresh_data = tsfresh_data.pivot(columns='Feature')
+
+tsfresh_data.columns = tsfresh_data.columns.map('{0[0]}|{0[1]}'.format)
+
+tsfresh_data = tsfresh_data.loc[:, tsfresh_data.apply(pd.Series.nunique) != 1]
+
+# Tsfresh Feature Selection
 U_100m = []
 U_10m = []
 V_100m = []
@@ -57,3 +75,4 @@ lofo_imp = LOFOImportance(dataset, cv=cv, scoring=scorer)
 importance_df = lofo_imp.get_importance()
 
 plot_importance(importance_df, figsize=(12, 20))
+
