@@ -140,7 +140,86 @@ def LOFO_GPU_Importance(X,y,features,param):
     importance_df["score"] = scores
     return importance_df.sort_values(by='score',ascending=True)
 
-    # Funções para Filtragem de Variáveis
+# RFE Feature Selection
+
+def gpu_df(df,y):
+    gpu_matrix = cp.asarray(df)
+    gpu_matrix = xgb.DMatrix(gpu_matrix,label=y)
+    return gpu_matrix
+
+def get_feat_scores(model,X_train):
+    scores = model.get_fscore()
+    scores = pd.DataFrame.from_dict(scores,orient='index')
+    scores = scores.reset_index()
+    scores.columns = ['Features','score']
+    scores['Features'] = scores['Features'].apply(lambda x: x.split('f')[1])
+    scores['Features'] = scores['Features'].astype(int)
+
+    columns_df = pd.DataFrame(X_train.columns,columns=['feature'])
+    columns_df['Features'] = columns_df.index
+
+    scores = scores.merge(columns_df,on='Features',how='left')
+    scores = scores.sort_values(by='score',ascending=False)
+    scores = scores.reset_index()
+    scores = scores.drop(['index','Features'],axis=1)
+    scores = scores[['feature','score']]
+
+    return scores
+
+def rfe_score(X,y,param,num_boost_round,early_stopping_rounds):
+    X_cv, X_hold, y_cv, y_hold = train_test_split(X, y, test_size=0.33, shuffle=False)
+
+    fold_scores = []
+    tscv = TimeSeriesSplit(n_splits=5)
+    for train_index, test_index in tscv.split(X_cv):
+        X_train, X_test = X_cv.iloc[train_index], X_cv.iloc[test_index]
+        y_train, y_test = y_cv.iloc[train_index], y_cv.iloc[test_index]
+
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.143, shuffle=False)
+
+        dtrain = gpu_df(X_train,y_train['Production'])
+        dval = gpu_df(X_val,y_val['Production'])
+
+        watchlist = [(dtrain,'train'),(dval,'eval')]
+        bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
+
+        scores = get_feat_scores(bst,X_train)
+
+        subset_score = []
+        for subset in np.arange(1,len(scores)+1):
+            features = scores.iloc[:subset]['feature']
+
+            dtrain = gpu_df(X_train[features],y_train['Production'])
+            dval = gpu_df(X_val[features],y_val['Production'])
+            dtest = gpu_df(X_test[features],y_test['Production'])
+
+            watchlist = [(dtrain,'train'),(dval,'eval')]
+            bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
+
+            preds = bst.predict(dtest,ntree_limit=bst.best_ntree_limit)
+            test_score = metric_cnr(preds,dtest)
+            subset_score.append(test_score)
+        fold_scores.append(subset_score)
+
+    subset_mean_score = np.empty(0)
+    for i in np.arange(len(fold_scores[0])):
+        subset_mean_score = np.append(subset_mean_score,np.array([x[i][1] for x in fold_scores]).mean())
+
+    subset_size = subset_mean_score.argmin() + 1
+
+    dtrain = gpu_df(X_cv,y_cv['Production'])
+    dval = gpu_df(X_hold,y_hold['Production'])
+
+    watchlist = [(dtrain,'train'),(dval,'eval')]
+    bst = xgb.train(param, dtrain, num_boost_round=num_boost_round, evals=watchlist, feval=metric_cnr,early_stopping_rounds=early_stopping_rounds,verbose_eval=False)
+
+    scores = get_feat_scores(bst,X_cv)
+
+    selected_features = scores.iloc[:subset_size]['feature']
+
+    return selected_features
+
+# Funções para Filtragem de Variáveis
 
 def get_selected_features(n_features):
     selected_features = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Importance_WF1.csv')
@@ -159,4 +238,9 @@ def get_selected_features(n_features):
     feature_data = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Selected_Features_Data.csv')
     feature_data = feature_data[features]
     return feature_data
+
+
+# RFE Feature Selection
+
+
 
