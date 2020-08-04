@@ -56,6 +56,7 @@ def get_simplified_data():
 
     y = pd.read_csv('Data/Y_train.csv')
     y = y.set_index('ID')
+
     return X,y
 
 # Função de Transformação dos Dados (Estabilização de Variância)
@@ -237,9 +238,6 @@ def get_selected_features(n_features):
     [features.append(x) for x in selected_features if x not in features]
     feature_data = pd.read_csv(r'C:\Users\andre_\OneDrive\Documentos\Feature Selection\Selected_Features_Data.csv')
     feature_data = feature_data[features]
+
     return feature_data
-
-
-
-
 
